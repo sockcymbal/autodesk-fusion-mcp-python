@@ -1,0 +1,10 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "python",
+  "author": "Your Name",
+  "description": "Live cube controlled by MCP",
+  "supportedOS": "mac",
+  "version": "0.1.0",
+  "runOnStartup": false,
+  "entry": "LiveCube.py"
+}
