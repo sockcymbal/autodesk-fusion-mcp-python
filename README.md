@@ -1,204 +1,144 @@
-# Everything MCP Server
+# Autodesk Fusion 360 MCP Integration
 
-> **IMPORTANT: This project is forked from the [official MCP servers repository](https://github.com/modelcontextprotocol/servers/tree/main/src/everything). All credit for the original implementation goes to the MCP team.**
+This repository provides an integration between Autodesk Fusion 360 and AI assistants using the Model Context Protocol (MCP). It allows AI assistants like Claude to create and modify 3D models in Fusion 360 through simple API calls.
 
-This MCP server attempts to exercise all the features of the MCP protocol. It is not intended to be a useful server, but rather a test server for builders of MCP clients. It implements prompts, tools, resources, sampling, and more to showcase MCP capabilities.
+## Overview
+
+The Fusion 360 MCP Integration enables AI assistants to control Fusion 360 for 3D modeling tasks. This project is particularly valuable for:
+
+- AI-assisted CAD design workflows
+- Parametric 3D model generation
+- Automating repetitive design tasks in Fusion 360
+- Creating programmatic interfaces to Fusion 360
 
 ## Components
 
-### Tools
+The integration consists of three main components:
 
-1. `echo`
-   - Simple tool to echo back input messages
-   - Input:
-     - `message` (string): Message to echo back
-   - Returns: Text content with echoed message
+### 1. LiveCube Script (`LiveCube.py` & `LiveCube.manifest`)
 
-2. `add`
-   - Adds two numbers together
-   - Inputs:
-     - `a` (number): First number
-     - `b` (number): Second number
-   - Returns: Text result of the addition
+A Fusion 360 add-in that:
+- Runs inside Fusion 360 as a script
+- Creates parametric cubes with specified dimensions
+- Exposes an HTTP endpoint on port 18080 to receive commands
+- Can be triggered via simple HTTP GET requests
 
-3. `longRunningOperation`
-   - Demonstrates progress notifications for long operations
-   - Inputs:
-     - `duration` (number, default: 10): Duration in seconds
-     - `steps` (number, default: 5): Number of progress steps
-   - Returns: Completion message with duration and steps
-   - Sends progress notifications during execution
+### 2. Fusion Server (`fusion_server.py`)
 
-4. `sampleLLM`
-   - Demonstrates LLM sampling capability using MCP sampling feature
-   - Inputs:
-     - `prompt` (string): The prompt to send to the LLM
-     - `maxTokens` (number, default: 100): Maximum tokens to generate
-   - Returns: Generated LLM response
+An intermediary server that:
+- Acts as a bridge between MCP and Fusion 360
+- Listens on port 8000 for MCP requests
+- Translates MCP calls into formats Fusion 360 can understand
+- Handles communication with the LiveCube script
 
-5. `getTinyImage`
-   - Returns a small test image
-   - No inputs required
-   - Returns: Base64 encoded PNG image data
+### 3. MCP Server (`fusion_mcp.py`)
 
-6. `printEnv`
-   - Prints all environment variables
-   - Useful for debugging MCP server configuration
-   - No inputs required
-   - Returns: JSON string of all environment variables
+The Model Context Protocol server that:
+- Provides tools AI assistants can use
+- Integrates with Autodesk Platform Services (APS) for cloud automation
+- Offers the `generate_cube` tool for creating parametric cubes
+- Uses OAuth authentication for secure access to APS
 
-7. `annotatedMessage`
-   - Demonstrates how annotations can be used to provide metadata about content
-   - Inputs:
-     - `messageType` (enum: "error" | "success" | "debug"): Type of message to demonstrate different annotation patterns
-     - `includeImage` (boolean, default: false): Whether to include an example image
-   - Returns: Content with varying annotations:
-     - Error messages: High priority (1.0), visible to both user and assistant
-     - Success messages: Medium priority (0.7), user-focused
-     - Debug messages: Low priority (0.3), assistant-focused
-     - Optional image: Medium priority (0.5), user-focused
-   - Example annotations:
-     ```json
-     {
-       "priority": 1.0,
-       "audience": ["user", "assistant"]
-     }
-     ```
+## Features
 
-8. `getResourceReference`
-   - Returns a resource reference that can be used by MCP clients
-   - Inputs:
-     - `resourceId` (number, 1-100): ID of the resource to reference
-   - Returns: A resource reference with:
-     - Text introduction
-     - Embedded resource with `type: "resource"`
-     - Text instruction for using the resource URI
+- **Cube Creation**: Generate parametric cubes with specified dimensions
+- **Autodesk Platform Services Integration**: Use APS Design Automation for complex operations
+- **Simple HTTP Interface**: Easy-to-use API for controlling Fusion 360
+- **MCP Standard Compliance**: Works with any MCP-compatible AI assistant
 
-### Resources
+## Installation
 
-The server provides 100 test resources in two formats:
-- Even numbered resources:
-  - Plaintext format
-  - URI pattern: `test://static/resource/{even_number}`
-  - Content: Simple text description
+### Prerequisites
 
-- Odd numbered resources:
-  - Binary blob format
-  - URI pattern: `test://static/resource/{odd_number}`
-  - Content: Base64 encoded binary data
+- Autodesk Fusion 360 (2023 or newer)
+- Python 3.9+ with pip
+- Autodesk Platform Services account with API access
+- MCP-compatible AI assistant (like Claude in Windsurf environments)
 
-Resource features:
-- Supports pagination (10 items per page)
-- Allows subscribing to resource updates
-- Demonstrates resource templates
-- Auto-updates subscribed resources every 5 seconds
+### Setup Instructions
 
-### Prompts
+1. **Install Python Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. `simple_prompt`
-   - Basic prompt without arguments
-   - Returns: Single message exchange
+2. **Set Up Environment Variables**:
+   Create a `keys.env` file with your Autodesk Platform Services credentials:
+   ```
+   APS_CLIENT_ID=your_client_id
+   APS_CLIENT_SECRET=your_client_secret
+   FUSION_ACTIVITY_ID=your_activity_id
+   ```
 
-2. `complex_prompt`
-   - Advanced prompt demonstrating argument handling
-   - Required arguments:
-     - `temperature` (number): Temperature setting
-   - Optional arguments:
-     - `style` (string): Output style preference
-   - Returns: Multi-turn conversation with images
+3. **Install LiveCube Script in Fusion 360**:
+   - Open Fusion 360
+   - Navigate to Scripts and Add-Ins (Shift+S)
+   - Click the green "+" button and select "Add script"
+   - Browse to and select the `LiveCube` folder in this repository
+   - The script should now appear in your scripts list
 
-3. `resource_prompt`
-   - Demonstrates embedding resource references in prompts
-   - Required arguments:
-     - `resourceId` (number): ID of the resource to embed (1-100)
-   - Returns: Multi-turn conversation with an embedded resource reference
-   - Shows how to include resources directly in prompt messages
+## Usage
 
-### Logging
+### Starting the Servers
 
-The server sends random-leveled log messages every 15 seconds, e.g.:
+1. **Start the Fusion Server**:
+   ```bash
+   python fusion_server.py
+   ```
+   This will start listening on http://localhost:8000
 
-```json
-{
-  "method": "notifications/message",
-  "params": {
-	"level": "info",
-	"data": "Info-level message"
-  }
-}
-```
+2. **Run the LiveCube Script**:
+   - In Fusion 360, go to Scripts and Add-Ins
+   - Select LiveCube and click "Run"
+   - This will start the HTTP server inside Fusion 360 on port 18080
 
-## Usage with Claude Desktop (uses [stdio Transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#stdio))
+3. **Start the MCP Server**:
+   ```bash
+   python fusion_mcp.py
+   ```
+   This will start the MCP server with stdio transport by default.
 
-Add to your `claude_desktop_config.json`:
+### Using with AI Assistants
+
+Configure your MCP-compatible AI assistant to connect to the Fusion MCP server. For example, with Claude Desktop:
 
 ```json
 {
   "mcpServers": {
-    "everything": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-everything"
-      ]
+    "fusion": {
+      "command": "python",
+      "args": ["/path/to/fusion_mcp.py"]
     }
   }
 }
 ```
 
-## Usage with VS Code
+The AI can then use the `generate_cube` tool to create cubes in Fusion 360.
 
-For quick installation, use of of the one-click install buttons below...
+### Direct API Access
 
-[![Install with NPX in VS Code](https://img.shields.io/badge/VS_Code-NPM-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=everything&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-everything%22%5D%7D) [![Install with NPX in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-NPM-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=everything&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-everything%22%5D%7D&quality=insiders)
+You can also directly interact with the LiveCube script HTTP endpoint:
 
-[![Install with Docker in VS Code](https://img.shields.io/badge/VS_Code-Docker-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=everything&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22mcp%2Feverything%22%5D%7D) [![Install with Docker in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Docker-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=everything&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22mcp%2Feverything%22%5D%7D&quality=insiders)
-
-For manual installation, add the following JSON block to your User Settings (JSON) file in VS Code. You can do this by pressing `Ctrl + Shift + P` and typing `Preferences: Open User Settings (JSON)`.
-
-Optionally, you can add it to a file called `.vscode/mcp.json` in your workspace. This will allow you to share the configuration with others.
-
-> Note that the `mcp` key is not needed in the `.vscode/mcp.json` file.
-
-#### NPX
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "everything": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-everything"]
-      }
-    }
-  }
-}
+```
+GET http://127.0.0.1:18080/cmd?edge=50
 ```
 
-## Running from source with [HTTP+SSE Transport](https://modelcontextprotocol.io/specification/2024-11-05/basic/transports#http-with-sse) (deprecated as of [2025-03-26](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports))
+This would create a cube with 50mm edge length in Fusion 360.
 
-```shell
-cd src/everything
-npm install
-npm run start:sse
-```
+## Developer Notes
 
-## Run from source with [Streamable HTTP Transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http)
+- The MCP server communicates with Autodesk Platform Services (APS) using OAuth 2.0 authentication
+- For advanced use cases, modify `fusion_mcp.py` to add additional tools beyond cube creation
+- The system architecture can be extended to support other Fusion 360 operations by adding new handlers in `fusion_server.py` and corresponding Fusion 360 scripts
 
-```shell
-cd src/everything
-npm install
-npm run start:streamableHttp
-```
+## License
 
-## Running as an installed package
-### Install 
-```shell
-npm install -g @modelcontextprotocol/server-everything@latest
-````
+MIT
 
-### Run the default (stdio) server
-```shell
+## Acknowledgments
+
+- Autodesk for the Fusion 360 API and Platform Services
+- Model Context Protocol (MCP) creators for enabling AI-tool interoperability
 npx @modelcontextprotocol/server-everything
 ```
 
