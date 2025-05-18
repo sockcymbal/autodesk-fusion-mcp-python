@@ -1,6 +1,6 @@
 # Autodesk Fusion 360 MCP Integration
 
-This repository provides an integration between Autodesk Fusion 360 and AI assistants using the Model Context Protocol (MCP). It allows AI assistants like Claude to create and modify 3D models in Fusion 360 through simple API calls.
+The Fusion MCP (Model Context Protocol) application is an integration system that enables AI assistants to interact programmatically with Autodesk Fusion 360. This implementation specifically demonstrates how to create parametric 3D models through simple API calls, bridging the gap between conversational AI and CAD software.
 
 ## Overview
 
