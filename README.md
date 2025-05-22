@@ -137,9 +137,10 @@ MIT
 
 ## Acknowledgments
 
+- Thanks to @damianengineer and ydooWoody for the contributions!
+- Thanks to YCombinator for hosting the World's Biggest MCP Hackathon: https://lu.ma/t4zeld9m?tk=67ixxD
 - Autodesk for the Fusion 360 API and Platform Services
 - Model Context Protocol (MCP) creators for enabling AI-tool interoperability
-npx @modelcontextprotocol/server-everything
 ```
 
 ### Or specify stdio explicitly
